@@ -1,0 +1,6 @@
+{
+  "name": "MA2 Remote",
+  "description": "Stage lighting OSC remote for grandMA2 onPC with executors, faders, playback, command line, and layout editor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

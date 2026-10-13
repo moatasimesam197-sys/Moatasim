@@ -1,0 +1,48 @@
+{
+  "_comment_header": "grandMA2 onPC OSC Configuration. Verify all settings against your console in Setup -> Network -> OSC.",
+  "network": {
+    "pc_ip_default": "192.168.1.100",
+    "osc_receive_port": 8000,
+    "_osc_receive_port_comment": "Port grandMA2 listens on for incoming OSC commands. Default: 8000. Verify in console: Setup -> Network -> OSC -> In Port",
+    "osc_send_port": 8001,
+    "_osc_send_port_comment": "Port on mobile device to receive grandMA2 feedback/echo. Default: 8001. Verify in console: Setup -> Network -> OSC -> Out Port",
+    "auto_reconnect": true,
+    "reconnect_interval_ms": 3000,
+    "max_backoff_ms": 30000
+  },
+  "address_patterns": {
+    "prefix": "/gma2",
+    "_prefix_comment": "OSC Prefix configured in grandMA2 (Setup -> Network -> OSC -> Prefix). Can be empty '' or '/gma2'. Verify in console.",
+    "cmd_address": "/gma2/cmd",
+    "_cmd_address_comment": "Default address for grandMA2 command line strings. grandMA2 executes string argument sent to this address.",
+    "fader_address_template": "/gma2/fader/{page}/{exec}",
+    "_fader_address_comment": "Alternative direct OSC fader address: e.g. /gma2/fader/1/1 with float 0.0-1.0. Also supports cmd string: 'Fader {exec} At {val}'",
+    "master_fader_address": "/gma2/master",
+    "_master_fader_comment": "Grand master level fader address or cmd 'SpecialMaster 2.1 At {val}'",
+    "feedback_exec_address_template": "/gma2/exec/{page}/{exec}",
+    "_feedback_exec_comment": "OSC feedback received from grandMA2 when an executor changes state"
+  },
+  "syntax_rules": {
+    "at_symbol": "@",
+    "_at_symbol_comment": "Use '@' or 'At' based on grandMA2 version syntax and command preference",
+    "fader_rate_limit_hz": 30,
+    "_fader_rate_limit_comment": "Maximum fader updates per second (30 Hz = ~33ms) to prevent UDP flood buffer overflow",
+    "commands": {
+      "go": "Go Exec {page}.{exec}",
+      "back": "GoBack Exec {page}.{exec}",
+      "pause": "Pause Exec {page}.{exec}",
+      "flash_on": "Flash On Exec {page}.{exec}",
+      "flash_off": "Flash Off Exec {page}.{exec}",
+      "off": "Off Exec {page}.{exec}",
+      "fader_level": "Fader {page}.{exec} At {percent}",
+      "master_level": "SpecialMaster 2.1 At {percent}",
+      "blackout": "Blackout",
+      "clear_all": "ClearAll",
+      "clear": "Clear",
+      "page_select": "Page {page}",
+      "highlight": "Highlight",
+      "solo": "Solo",
+      "blind": "Blind"
+    }
+  }
+}
