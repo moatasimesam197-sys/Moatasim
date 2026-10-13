@@ -79,6 +79,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.OscViewModel
+import com.example.ui.components.GrandMA2CommandLineInput
 import com.example.ui.components.HapticUtil
 import com.example.ui.theme.StageAmber
 import com.example.ui.theme.StageBlack
@@ -146,30 +147,22 @@ fun CommandLineScreen(
         )
 
         // --- 2. The grandMA2 Hardware Command Line Input Strip ---
-        Ma2CommandLineInputStrip(
-            commandText = cmdText,
-            atSymbol = config.atSymbol,
-            cursorAlpha = cursorAlpha,
-            showSoftKeyboard = showSoftKeyboard,
-            focusRequester = focusRequester,
-            onCommandChange = { viewModel.updateCommandLineText(it) },
-            onClear = {
-                if (hapticEnabled) HapticUtil.performHaptic(context)
-                viewModel.clearCommandLine()
-            },
-            onToggleKeyboard = {
-                showSoftKeyboard = !showSoftKeyboard
-                if (showSoftKeyboard) {
-                    try { focusRequester.requestFocus() } catch (ignored: Exception) {}
-                }
-            },
-            onExecute = {
+        GrandMA2CommandLineInput(
+            value = cmdText,
+            onValueChange = { viewModel.updateCommandLineText(it) },
+            onSendCommand = {
                 if (cmdText.isNotBlank()) {
                     if (hapticEnabled) HapticUtil.performHaptic(context, isStrong = true)
                     lastExecutedEcho = "[OK] Executed: $cmdText"
                     viewModel.submitCommandLine()
                 }
             },
+            atSymbol = config.atSymbol,
+            oscAddress = config.cmdAddress,
+            commandHistory = history,
+            onHistorySelect = { viewModel.updateCommandLineText(it) },
+            showQuickSyntaxChips = false,
+            hapticEnabled = hapticEnabled,
             modifier = Modifier.fillMaxWidth()
         )
 

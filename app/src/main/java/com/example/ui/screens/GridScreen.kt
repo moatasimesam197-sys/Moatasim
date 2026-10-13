@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import com.example.model.ExecutorAction
 import com.example.model.ExecutorButton
 import com.example.ui.OscViewModel
+import com.example.ui.components.GrandMA2ExecutorButton
 import com.example.ui.components.HapticUtil
 import com.example.ui.theme.StageAmber
 import com.example.ui.theme.StageBlack
@@ -73,9 +74,18 @@ import com.example.ui.theme.StageGreen
 import com.example.ui.theme.StageRed
 import com.example.ui.theme.StageSurface
 import com.example.ui.theme.StageSurfaceElevated
+import com.example.ui.theme.StageSurfaceVariant
 import com.example.ui.theme.StageTextMuted
 import com.example.ui.theme.StageTextPrimary
 import com.example.ui.theme.StageTextSecondary
+
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.TouchApp
 
 @Composable
 fun GridScreen(
@@ -103,21 +113,37 @@ fun GridScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = layout.name.uppercase(),
+                            color = StageCyan,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(StageCyan.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "PAGE $currentPage",
+                                color = StageCyan,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
                     Text(
-                        text = layout.name.uppercase(),
-                        color = StageCyan,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Text(
-                        text = "${layout.executorButtons.size} Buttons • Tap to trigger, hold to Flash, long press to edit",
+                        text = "${layout.executorButtons.size} Buttons • Tap to trigger, hold to Flash, Toggle button to switch On/Off",
                         color = StageTextMuted,
                         fontSize = 11.sp
                     )
                 }
 
-                Row {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
                         onClick = { showAddDialog = true },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
@@ -130,36 +156,29 @@ fun GridScreen(
                 }
             }
 
-            // Grid of executor buttons
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 150.dp),
-                contentPadding = PaddingValues(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(layout.executorButtons, key = { it.id }) { btn ->
-                    val page = if (btn.page > 0) btn.page else currentPage
-                    val execKey = "$page.${btn.execNumber}"
-                    val isActive = activeMap[execKey] ?: false
-
-                    ExecutorGridItem(
-                        button = btn,
-                        page = page,
-                        isActive = isActive,
-                        onPress = { isDown ->
-                            if (hapticEnabled && isDown) {
-                                HapticUtil.performHaptic(context, isStrong = btn.action == ExecutorAction.FLASH)
-                            }
-                            viewModel.triggerExecutorButton(btn, isDown)
-                        },
-                        onLongClick = {
-                            if (hapticEnabled) HapticUtil.performHaptic(context, isStrong = true)
-                            editingButton = btn
-                        }
-                    )
-                }
-            }
+            // High performance Executor Playback Grid Component
+            ExecutorPlaybackGrid(
+                executors = layout.executorButtons,
+                currentPage = currentPage,
+                activeExecutorsMap = activeMap,
+                onTogglePlayback = { btn ->
+                    if (hapticEnabled) {
+                        HapticUtil.performHaptic(context, isStrong = true)
+                    }
+                    viewModel.togglePlaybackState(btn)
+                },
+                onPressAction = { btn, isDown ->
+                    if (hapticEnabled && isDown) {
+                        HapticUtil.performHaptic(context, isStrong = btn.action == ExecutorAction.FLASH)
+                    }
+                    viewModel.triggerExecutorButton(btn, isDown)
+                },
+                onConfigureButton = { btn ->
+                    if (hapticEnabled) HapticUtil.performHaptic(context, isStrong = true)
+                    editingButton = btn
+                },
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 
@@ -202,143 +221,93 @@ fun GridScreen(
     }
 }
 
+/**
+ * Reusable Compose grid component to represent grandMA2 executors,
+ * allowing users to toggle and view playback state via OSC.
+ */
+@Composable
+fun ExecutorPlaybackGrid(
+    executors: List<ExecutorButton>,
+    currentPage: Int,
+    activeExecutorsMap: Map<String, Boolean>,
+    onTogglePlayback: (ExecutorButton) -> Unit,
+    onPressAction: (ExecutorButton, Boolean) -> Unit,
+    onConfigureButton: (ExecutorButton) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (executors.isEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Layers,
+                    contentDescription = null,
+                    tint = StageTextMuted,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No Executors Configured",
+                    color = StageTextSecondary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Tap '+ Add' to assign buttons to grandMA2 executors",
+                    color = StageTextMuted,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    } else {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 155.dp),
+            contentPadding = PaddingValues(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = modifier.fillMaxSize()
+        ) {
+            items(executors, key = { it.id }) { btn ->
+                val page = if (btn.page > 0) btn.page else currentPage
+                val execKey = "$page.${btn.execNumber}"
+                val isActive = activeExecutorsMap[execKey] ?: false
+
+                ExecutorGridItem(
+                    button = btn,
+                    page = page,
+                    isActive = isActive,
+                    onPress = { isDown -> onPressAction(btn, isDown) },
+                    onTogglePlayback = { onTogglePlayback(btn) },
+                    onLongClick = { onConfigureButton(btn) }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun ExecutorGridItem(
     button: ExecutorButton,
     page: Int,
     isActive: Boolean,
     onPress: (isDown: Boolean) -> Unit,
+    onTogglePlayback: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isPressedState by remember { mutableStateOf(false) }
-
-    val baseColor = try {
-        Color(android.graphics.Color.parseColor(button.colorHex))
-    } catch (e: Exception) {
-        StageAmber
-    }
-
-    val animatedBg by animateColorAsState(
-        targetValue = when {
-            isPressedState -> baseColor.copy(alpha = 0.5f)
-            isActive -> baseColor.copy(alpha = 0.25f)
-            else -> StageSurfaceElevated
-        },
-        label = "grid_btn_bg"
+    GrandMA2ExecutorButton(
+        button = button,
+        page = page,
+        isActiveCue = isActive,
+        activeCueLabel = if (isActive) "ACTIVE CUE" else null,
+        onPressChange = onPress,
+        onTogglePlayback = onTogglePlayback,
+        onConfigureClick = onLongClick,
+        modifier = modifier.height(118.dp)
     )
-
-    val animatedBorder by animateColorAsState(
-        targetValue = when {
-            isPressedState || isActive -> baseColor
-            else -> StageBorder
-        },
-        label = "grid_btn_border"
-    )
-
-    Box(
-        modifier = modifier
-            .height(105.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(animatedBg)
-            .border(
-                width = if (isActive || isPressedState) 2.dp else 1.dp,
-                color = animatedBorder,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .pointerInput(button.id) {
-                detectTapGestures(
-                    onPress = {
-                        isPressedState = true
-                        onPress(true)
-                        val released = tryAwaitRelease()
-                        isPressedState = false
-                        onPress(false)
-                    },
-                    onLongPress = {
-                        onLongClick()
-                    }
-                )
-            }
-            .padding(10.dp)
-            .testTag("exec_button_${button.execNumber}")
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Top Row: Exec ID and Action Pill
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "EXEC $page.${button.execNumber}",
-                    color = if (isActive) baseColor else StageTextMuted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
-                )
-
-                // Action Pill
-                Box(
-                    modifier = Modifier
-                        .background(baseColor.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = button.action.name,
-                        color = baseColor,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-            }
-
-            // Middle: Custom User Label
-            Text(
-                text = button.label,
-                color = if (isActive) Color.White else StageTextPrimary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            // Bottom: Active Status Indicator & Color bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(if (isActive) StageGreen else Color(0xFF475569))
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (isActive) "ACTIVE" else "READY",
-                        color = if (isActive) StageGreen else StageTextMuted,
-                        fontSize = 9.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(width = 24.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(baseColor)
-                )
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -247,6 +247,20 @@ class OscViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun togglePlaybackState(button: ExecutorButton) {
+        val page = if (button.page > 0) button.page else _currentPage.value
+        val execKey = "$page.${button.execNumber}"
+        val isCurrentlyActive = _activeExecutorsMap.value[execKey] ?: false
+        val nextState = !isCurrentlyActive
+
+        if (nextState) {
+            oscService.sendCommand("Go Exec $execKey")
+        } else {
+            oscService.sendCommand("Off Exec $execKey")
+        }
+        toggleSimulatedExec(execKey, nextState)
+    }
+
     private fun toggleSimulatedExec(key: String, active: Boolean) {
         _activeExecutorsMap.value = _activeExecutorsMap.value + (key to active)
     }

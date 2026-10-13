@@ -3,6 +3,9 @@ package com.example.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.example.ui.components.GrandMA2CommandLineInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,10 +76,13 @@ fun PlaybackScreen(
 
     var execInputText by remember(selectedExec) { mutableStateOf(selectedExec) }
 
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(StageBlack)
+            .verticalScroll(scrollState)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
@@ -379,5 +385,13 @@ fun PlaybackScreen(
                 }
             }
         }
+
+        // Live Quick grandMA2 Command Line Input
+        GrandMA2CommandLineInput(
+            viewModel = viewModel,
+            placeholder = "Quick Command (e.g. Goto Cue 1, Off Exec 1.1)...",
+            showQuickSyntaxChips = false,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

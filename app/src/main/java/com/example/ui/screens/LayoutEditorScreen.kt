@@ -1113,13 +1113,15 @@ fun DraggableGridFader(
                             .background(Brush.verticalGradient(listOf(faderColor, faderColor.copy(alpha = 0.4f))))
                     )
 
-                    // Knob handle
+                    // Knob handle with accurate vertical displacement
+                    val travelRangePx = (trackHeightPx - 20f).coerceAtLeast(0f)
+                    val knobOffsetFromTop = ((1f - fader.level.coerceIn(0f, 1f)) * travelRangePx).toInt()
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(20.dp)
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = (fader.level * (trackHeightPx - 20f)).coerceAtLeast(0f).let { 0.dp })
+                            .align(Alignment.TopCenter)
+                            .offset { androidx.compose.ui.unit.IntOffset(0, knobOffsetFromTop) }
                             .background(Color(0xFFCBD5E1), RoundedCornerShape(4.dp))
                             .border(1.dp, faderColor, RoundedCornerShape(4.dp))
                     )
